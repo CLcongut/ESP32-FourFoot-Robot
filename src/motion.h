@@ -19,7 +19,7 @@ typedef enum ServoNumber
 class Motion : public Adafruit_PWMServoDriver
 {
 private:
-    Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+    Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x47, Wire1);
 
 public:
     Motion();
@@ -37,12 +37,13 @@ public:
     void middle();    // number 8
     void normal();    // number 9
     void right();     // number 10
-    void stand();      // number 
-    void sleep1();     // number 11
-    void sleep2();     // number 12
-    void surrender(); // number 13
-    void swing1();     // number 14
+    void stand();     // number 11
+    void sleep1();     // number 12
+    void sleep2();     // number 13
+    void surrender(); // number 14
+    // void swing1();
     /*control command*/
     void controlNumber(int number);
     void ctlSingleServo(int servo, int angleStart, int angleEnd);
+    void setFrequency(float frequency);
 };

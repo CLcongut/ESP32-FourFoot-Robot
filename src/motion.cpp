@@ -10,6 +10,7 @@ Motion::~Motion()
 
 bool Motion::begin()
 {
+    Wire1.setPins(17, 16);
     bool ret;
     ret = pwm.begin();
     pwm.setPWMFreq(60);
@@ -293,78 +294,6 @@ void Motion::surrender()
     pwm.setPWM(LDFOOT, 0, 660);
 }
 
-void Motion::swing1()
-{
-    vTaskDelay(50);
-    pwm.setPWM(LUFOOT, 0, 450);
-    pwm.setPWM(LDFOOT, 0, 260);
-    vTaskDelay(50);
-    pwm.setPWM(LULEG, 0, 370);
-    pwm.setPWM(RDLEG, 0, 390);
-    vTaskDelay(50);
-    pwm.setPWM(LUFOOT, 0, 600);
-    pwm.setPWM(LDFOOT, 0, 160);
-    vTaskDelay(50);
-    pwm.setPWM(RUFOOT, 0, 280);
-    pwm.setPWM(RDFOOT, 0, 490);
-    vTaskDelay(50);
-    pwm.setPWM(RULEG, 0, 190);
-    pwm.setPWM(LDLEG, 0, 180);
-    vTaskDelay(50);
-    pwm.setPWM(RUFOOT, 0, 120);
-    pwm.setPWM(RDFOOT, 0, 620);
-    vTaskDelay(500);
-    pwm.setPWM(LUFOOT, 0, 450);
-    pwm.setPWM(RUFOOT, 0, 120);
-    pwm.setPWM(RDFOOT, 0, 470);
-    pwm.setPWM(LDFOOT, 0, 160);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 600);
-    pwm.setPWM(RUFOOT, 0, 270);
-    pwm.setPWM(RDFOOT, 0, 620);
-    pwm.setPWM(LDFOOT, 0, 310);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 450);
-    pwm.setPWM(RUFOOT, 0, 120);
-    pwm.setPWM(RDFOOT, 0, 470);
-    pwm.setPWM(LDFOOT, 0, 160);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 600);
-    pwm.setPWM(RUFOOT, 0, 270);
-    pwm.setPWM(RDFOOT, 0, 620);
-    pwm.setPWM(LDFOOT, 0, 310);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 450);
-    pwm.setPWM(RUFOOT, 0, 120);
-    pwm.setPWM(RDFOOT, 0, 470);
-    pwm.setPWM(LDFOOT, 0, 160);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 600);
-    pwm.setPWM(RUFOOT, 0, 270);
-    pwm.setPWM(RDFOOT, 0, 620);
-    pwm.setPWM(LDFOOT, 0, 310);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 450);
-    pwm.setPWM(RUFOOT, 0, 120);
-    pwm.setPWM(RDFOOT, 0, 470);
-    pwm.setPWM(LDFOOT, 0, 160);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 600);
-    pwm.setPWM(RUFOOT, 0, 270);
-    pwm.setPWM(RDFOOT, 0, 620);
-    pwm.setPWM(LDFOOT, 0, 310);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 450);
-    pwm.setPWM(RUFOOT, 0, 120);
-    pwm.setPWM(RDFOOT, 0, 470);
-    pwm.setPWM(LDFOOT, 0, 160);
-    vTaskDelay(400);
-    pwm.setPWM(LUFOOT, 0, 600);
-    pwm.setPWM(RUFOOT, 0, 270);
-    pwm.setPWM(RDFOOT, 0, 620);
-    pwm.setPWM(LDFOOT, 0, 310);
-    vTaskDelay(400);
-}
 // 加一个左右摇摆
 
 void Motion::controlNumber(int num)
@@ -405,16 +334,16 @@ void Motion::controlNumber(int num)
         right();
         break;
     case 11:
-        sleep1();
+        stand();
         break;
     case 12:
-        sleep2();
+        sleep1();
         break;
     case 13:
-        surrender();
+        sleep2();
         break;
     case 14:
-        swing1();
+        surrender();
         break;
     default:
         break;
@@ -424,4 +353,9 @@ void Motion::controlNumber(int num)
 void Motion::ctlSingleServo(int servo, int angleStart, int angleEnd)
 {
     pwm.setPWM(servo, angleStart, angleEnd);
+}
+
+void Motion::setFrequency(float frequency)
+{
+    pwm.setPWMFreq(frequency);
 }
