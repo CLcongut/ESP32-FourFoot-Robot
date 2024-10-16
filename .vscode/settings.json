@@ -11,6 +11,7 @@
         "*.tcc": "cpp",
         "memory": "cpp",
         "random": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "ratio": "cpp"
     }
 }

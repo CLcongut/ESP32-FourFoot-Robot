@@ -29,7 +29,7 @@ void udp_control(void *param)
   }
   Serial.print("Connected, IP Address: ");
   Serial.println(WiFi.localIP());
-  xTaskNotify(xOLEDTask, 0x01, eSetBits);
+  xTaskNotify(xOLEDTask, 17, eSetValueWithOverwrite);
   udp.begin(remoteUdpPort);
   for (;;)
   {
@@ -79,6 +79,7 @@ void udp_control(void *param)
         String notifyValueStr = recvStr.substring(recvStr.indexOf("#") + 1);
         uint32_t notifyValue = notifyValueStr.toInt();
         xTaskNotify(xMotionTask, notifyValue, eSetValueWithOverwrite);
+        xTaskNotify(xOLEDTask, notifyValue, eSetValueWithOverwrite);
       }
     }
     vTaskDelay(1);
@@ -104,14 +105,28 @@ void oled_task(void *param)
   for (;;)
   {
     xTaskNotifyWait(0, 0xff, &ulOLEDValue, portMAX_DELAY);
-    switch (ulOLEDValue)
+    if (ulOLEDValue <= 16)
     {
-    case 0x01:
-      display.showNetworkIP(WiFi.localIP());
-      break;
-
-    default:
-      break;
+      display.pairWithMotion(ulOLEDValue);
+    }
+    else
+    {
+      switch (ulOLEDValue)
+      {
+      case 17:
+        display.showNetworkIP(WiFi.localIP());
+        break;
+      case 18:
+        static int i = 0;
+        display.showExpression(i);
+        if (++i > 8)
+        {
+          i = 0;
+        }
+        break;
+      default:
+        break;
+      }
     }
     vTaskDelay(1);
   }
@@ -137,13 +152,12 @@ void ws2812_task(void *param)
 
 void Key1Interrupt()
 {
-  // display.test1();
   digitalWrite(SignalPin, !digitalRead(SignalPin));
+  xTaskNotify(xOLEDTask, 18, eSetValueWithOverwrite);
 }
 
 void Key2Interrupt()
 {
-  // display.test2();
   digitalWrite(SignalPin, !digitalRead(SignalPin));
 }
 
