@@ -4,6 +4,7 @@
 #include <U8g2lib.h>
 #include "motion.h"
 #include "cconfig.h"
+#include "display.h"
 
 static IPAddress remote_IP(192, 168, 31, 199);
 static uint32_t remoteUdpPort = 8080;
@@ -11,7 +12,7 @@ static uint32_t remoteUdpPort = 8080;
 static WiFiUDP udp;
 static Motion motion;
 static CRGB leds[2];
-static U8G2_SSD1306_128X64_NONAME_F_HW_I2C oled(U8G2_R2);
+static Display display;
 
 static TaskHandle_t xMotionTask = NULL;
 static TaskHandle_t xOLEDTask = NULL;
@@ -28,6 +29,7 @@ void udp_control(void *param)
   }
   Serial.print("Connected, IP Address: ");
   Serial.println(WiFi.localIP());
+  xTaskNotify(xOLEDTask, 0x01, eSetBits);
   udp.begin(remoteUdpPort);
   for (;;)
   {
@@ -86,25 +88,31 @@ void udp_control(void *param)
 void motion_task(void *param)
 {
   motion.begin();
-  uint32_t ulNotifyValue = 0;
+  uint32_t ulMotionValue = 0;
   for (;;)
   {
-    xTaskNotifyWait(0, 0xff, &ulNotifyValue, portMAX_DELAY);
-    motion.controlNumber(ulNotifyValue);
+    xTaskNotifyWait(0, 0xff, &ulMotionValue, portMAX_DELAY);
+    motion.controlNumber(ulMotionValue);
     vTaskDelay(1);
   }
 }
 
 void oled_task(void *param)
 {
-  oled.begin();
-  oled.clearBuffer();
-  oled.setFont(u8g2_font_crox2h_tr);
-  oled.drawStr(22, 20, "Hello, ESP32!");
-  oled.sendBuffer();
-
+  display.begin();
+  uint32_t ulOLEDValue = 0;
   for (;;)
   {
+    xTaskNotifyWait(0, 0xff, &ulOLEDValue, portMAX_DELAY);
+    switch (ulOLEDValue)
+    {
+    case 0x01:
+      display.showNetworkIP(WiFi.localIP());
+      break;
+
+    default:
+      break;
+    }
     vTaskDelay(1);
   }
 }
@@ -127,9 +135,25 @@ void ws2812_task(void *param)
   }
 }
 
+void Key1Interrupt()
+{
+  // display.test1();
+  digitalWrite(SignalPin, !digitalRead(SignalPin));
+}
+
+void Key2Interrupt()
+{
+  // display.test2();
+  digitalWrite(SignalPin, !digitalRead(SignalPin));
+}
+
 void setup()
 {
   Serial.begin(115200);
+  pinMode(SignalPin, OUTPUT);
+
+  attachInterrupt(Key1, Key1Interrupt, RISING);
+  attachInterrupt(Key2, Key2Interrupt, RISING);
 
   xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, NULL, 0);
   xTaskCreate(motion_task, "motion_task", 2048, NULL, 2, &xMotionTask);

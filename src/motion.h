@@ -16,7 +16,7 @@ typedef enum ServoNumber
     LDFOOT,
 } servoMap;
 
-class Motion : public Adafruit_PWMServoDriver
+class Motion
 {
 private:
     Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x47, Wire1);
