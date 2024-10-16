@@ -18,6 +18,8 @@ static TaskHandle_t xMotionTask = NULL;
 static TaskHandle_t xOLEDTask = NULL;
 static TaskHandle_t xWS2812Task = NULL;
 
+volatile bool WS2812Enable = true;
+
 void udp_control(void *param)
 {
   WiFi.mode(WIFI_STA);
@@ -135,18 +137,37 @@ void oled_task(void *param)
 void ws2812_task(void *param)
 {
   FastLED.addLeds<WS2812B, 5, GRB>(leds, 2);
+  FastLED.setBrightness(255);
+  FastLED.clear();
+  leds[0] = CRGB::Red;
+  leds[1] = CRGB::Red;
+  FastLED.show();
+
   for (;;)
   {
-    // Turn the LED on, then pause
-    leds[0] = CRGB::Blue;
-    leds[1] = CRGB::Blue;
-    FastLED.show();
-    vTaskDelay(500);
-    // Now turn the LED off, then pause
-    leds[0] = CRGB::Black;
-    leds[1] = CRGB::Black;
-    FastLED.show();
-    vTaskDelay(500);
+    if (WS2812Enable)
+    {
+      for (int i = 0; i < 256; i++)
+      {
+        leds[0] = CHSV(i, 255, 255);
+        leds[1] = CHSV(i, 255, 255);
+        FastLED.show();
+        FastLED.delay(10);
+      }
+      for (int i = 255; i >= 0; i--)
+      {
+        leds[0] = CHSV(i, 255, 255);
+        leds[1] = CHSV(i, 255, 255);
+        FastLED.show();
+        FastLED.delay(10);
+      }
+    }
+    else
+    {
+      leds[0] = CRGB::Black;
+      leds[1] = CRGB::Black;
+      FastLED.show();
+    }
   }
 }
 
@@ -159,6 +180,7 @@ void Key1Interrupt()
 void Key2Interrupt()
 {
   digitalWrite(SignalPin, !digitalRead(SignalPin));
+  WS2812Enable = !WS2812Enable;
 }
 
 void setup()
@@ -172,7 +194,7 @@ void setup()
   xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, NULL, 0);
   xTaskCreate(motion_task, "motion_task", 2048, NULL, 2, &xMotionTask);
   xTaskCreate(oled_task, "oled_task", 2048, NULL, 2, &xOLEDTask);
-  xTaskCreate(ws2812_task, "ws2812_task", 1024, NULL, 2, &xWS2812Task);
+  xTaskCreate(ws2812_task, "ws2812_task", 2028, NULL, 2, &xWS2812Task);
 }
 
 void loop()
