@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <BluetoothSerial.h>
 #include <WiFi.h>
+#include <FastLED.h>
+#include <U8g2lib.h>
 #include "motion.h"
 #include "cconfig.h"
 
@@ -8,9 +10,12 @@ IPAddress remote_IP(192, 168, 31, 199);
 uint32_t remoteUdpPort = 8080;
 
 BluetoothSerial SerialBT;
-WiFiUDP udp;
-Motion motion;
 
+Motion motion;
+CRGB leds[2];
+
+#ifdef UDPDEBUG
+WiFiUDP udp;
 void udp_control(void *param)
 {
   WiFi.mode(WIFI_STA);
@@ -68,6 +73,7 @@ void udp_control(void *param)
     vTaskDelay(1);
   }
 }
+#endif
 
 void bluetooth_control(void *param)
 {
@@ -90,10 +96,23 @@ void setup()
 {
   Serial.begin(115200);
   motion.begin();
-  // xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, NULL, 0);
+  FastLED.addLeds<WS2812B, 5, GRB>(leds, 2);
+#ifdef UDPDEBUG
+  xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, NULL, 0);
+#endif
   xTaskCreatePinnedToCore(bluetooth_control, "bluetooth_control", 2048, NULL, 2, NULL, 0);
 }
 
 void loop()
 {
+  // Turn the LED on, then pause
+  leds[0] = CRGB::Blue;
+  leds[1] = CRGB::Blue;
+  FastLED.show();
+  vTaskDelay(500);
+  // Now turn the LED off, then pause
+  leds[0] = CRGB::Black;
+  leds[1] = CRGB::Black;
+  FastLED.show();
+  vTaskDelay(500);
 }
