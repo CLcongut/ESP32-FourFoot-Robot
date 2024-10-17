@@ -17,52 +17,25 @@ void Display::begin()
     oled.sendBuffer();
 }
 
-void Display::showNetworkIP(IPAddress IPAddress)
+void Display::menuWiFiMode(bool mode)
 {
     oled.clearBuffer();
-    oled.drawStr(0, 20, "IP Address:");
-    oled.setCursor(0, 40);
-    oled.println(IPAddress);
-    oled.sendBuffer();
-}
-
-void Display ::showExpression(int expression)
-{
-    oled.clearBuffer();
-    switch (expression)
+    oled.drawStr(0, 20, "AP Mode");
+    oled.drawStr(0, 40, "STA Mode");
+    switch (mode)
     {
     case 0:
-        oled.drawXBMP(2, 2, 128, 64, youhao);
+        oled.drawTriangle(80, 15, 90, 10, 90, 20);
         break;
     case 1:
-        oled.drawXBMP(2, 2, 128, 64, zhengchang);
-        break;
-    case 2:
-        oled.drawXBMP(2, 2, 128, 64, shuijiao);
-        break;
-    case 3:
-        oled.drawXBMP(2, 2, 128, 64, nihao);
-        break;
-    case 4:
-        oled.drawXBMP(2, 2, 128, 64, laia);
-        break;
-    case 5:
-        oled.drawXBMP(2, 2, 128, 64, goupao);
-        break;
-    case 6:
-        oled.drawXBMP(2, 2, 128, 64, touxiang);
-        break;
-    case 7:
-        oled.drawXBMP(2, 2, 128, 64, yaobai);
-        break;
-    case 8:
-        oled.drawXBMP(2, 2, 128, 64, shanzi);
-        break;
-
-    default:
+        oled.drawTriangle(80, 35, 90, 30, 90, 40);
         break;
     }
     oled.sendBuffer();
+}
+
+void Display::numberCtrl(int number)
+{
 }
 
 void Display::pairWithMotion(int expression)
@@ -124,20 +97,50 @@ void Display::pairWithMotion(int expression)
     oled.sendBuffer();
 }
 
-void Display::numberCtrl(int number)
-{
-}
-
-void Display::test1()
+void Display ::showExpression(int expression)
 {
     oled.clearBuffer();
-    oled.drawStr(0, 20, "Test 1");
+    switch (expression)
+    {
+    case 0:
+        oled.drawXBMP(2, 2, 128, 64, youhao);
+        break;
+    case 1:
+        oled.drawXBMP(2, 2, 128, 64, zhengchang);
+        break;
+    case 2:
+        oled.drawXBMP(2, 2, 128, 64, shuijiao);
+        break;
+    case 3:
+        oled.drawXBMP(2, 2, 128, 64, nihao);
+        break;
+    case 4:
+        oled.drawXBMP(2, 2, 128, 64, laia);
+        break;
+    case 5:
+        oled.drawXBMP(2, 2, 128, 64, goupao);
+        break;
+    case 6:
+        oled.drawXBMP(2, 2, 128, 64, touxiang);
+        break;
+    case 7:
+        oled.drawXBMP(2, 2, 128, 64, yaobai);
+        break;
+    case 8:
+        oled.drawXBMP(2, 2, 128, 64, shanzi);
+        break;
+
+    default:
+        break;
+    }
     oled.sendBuffer();
 }
 
-void Display::test2()
+void Display::showNetworkIP(IPAddress IPAddress)
 {
     oled.clearBuffer();
-    oled.drawStr(0, 20, "Test 2");
+    oled.drawStr(0, 20, "IP Address:");
+    oled.setCursor(0, 40);
+    oled.println(IPAddress);
     oled.sendBuffer();
 }

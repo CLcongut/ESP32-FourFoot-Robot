@@ -13,10 +13,9 @@ public:
     ~Display();
 
     void begin();
-    void showNetworkIP(IPAddress IPAddress);
-    void showExpression(int expression);
-    void pairWithMotion(int expression);
+    void menuWiFiMode(bool mode);
     void numberCtrl(int number);
-    void test1();
-    void test2();
+    void pairWithMotion(int expression);
+    void showExpression(int expression);
+    void showNetworkIP(IPAddress IPAddress);
 };

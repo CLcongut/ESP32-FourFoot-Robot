@@ -16,21 +16,37 @@ static CRGB leds[2];
 static Display display;
 static Preferences prefs;
 
+static TaskHandle_t xUDPTask = NULL;
 static TaskHandle_t xMotionTask = NULL;
 static TaskHandle_t xOLEDTask = NULL;
 static TaskHandle_t xWS2812Task = NULL;
 
-volatile bool isRGBenabled;
+volatile bool isRGBenabled = false;
+volatile bool isWiFiMode = false;
+volatile bool isChoosed = false;
 
 void udp_control(void *param)
 {
-  WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);
-  WiFi.begin(wifi_SSID, wifi_PSWD);
-  while (WiFi.status() != WL_CONNECTED)
+  prefs.begin("OffLine");
+  isWiFiMode = prefs.getBool("isWiFiMode", true);
+  prefs.end();
+
+  if (isWiFiMode)
   {
-    vTaskDelay(200);
+    WiFi.mode(WIFI_STA);
+    WiFi.setSleep(false);
+    WiFi.begin(wifi_SSID, wifi_PSWD);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      vTaskDelay(200);
+    }
   }
+  else
+  {
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP("ESP32-FFR-AP");
+  }
+
   Serial.print("Connected, IP Address: ");
   Serial.println(WiFi.localIP());
   xTaskNotify(xOLEDTask, 17, eSetValueWithOverwrite);
@@ -41,6 +57,7 @@ void udp_control(void *param)
   udp.print(isRGBenabled);
   udp.endPacket();
   udp.begin(remoteUdpPort);
+  digitalWrite(SignalPin, LOW);
   for (;;)
   {
     // packetSize长度小于8时需要定义为8，并且使用memset清零
@@ -141,8 +158,7 @@ void oled_task(void *param)
   uint32_t ulOLEDValue = 0;
   for (;;)
   {
-    xTaskNotifyWait(0, 0xff, &ulOLEDValue, portMAX_DELAY);
-    if (ulOLEDValue <= 16)
+    if (xTaskNotifyWait(0, 0xff, &ulOLEDValue, 10) == pdTRUE && ulOLEDValue <= 16)
     {
       display.pairWithMotion(ulOLEDValue);
     }
@@ -161,9 +177,28 @@ void oled_task(void *param)
           i = 0;
         }
         break;
-      default:
-        break;
       }
+    }
+
+    if (isChoosed)
+    {
+      digitalWrite(SignalPin, HIGH);
+      isChoosed = false;
+      prefs.begin("OffLine");
+      isWiFiMode = prefs.getBool("isWiFiMode", true);
+      prefs.end();
+      while (!isChoosed)
+      {
+        display.menuWiFiMode(isWiFiMode);
+      }
+      prefs.begin("OffLine");
+      prefs.putBool("isWiFiMode", isWiFiMode);
+      prefs.end();
+
+      isChoosed = false;
+      vTaskSuspend(xUDPTask);
+      vTaskDelete(xUDPTask);
+      xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
     }
     vTaskDelay(1);
   }
@@ -202,13 +237,14 @@ void ws2812_task(void *param)
 
 void Key1Interrupt()
 {
-  digitalWrite(SignalPin, !digitalRead(SignalPin));
-  xTaskNotify(xOLEDTask, 18, eSetValueWithOverwrite);
+  // xTaskNotify(xOLEDTask, 21, eSetValueWithOverwrite);
+  isWiFiMode = !isWiFiMode;
 }
 
 void Key2Interrupt()
 {
-  digitalWrite(SignalPin, !digitalRead(SignalPin));
+  // xTaskNotify(xOLEDTask, 21, eSetValueWithOverwrite);
+  isChoosed = true;
 }
 
 void setup()
@@ -223,7 +259,7 @@ void setup()
   attachInterrupt(Key1, Key1Interrupt, RISING);
   attachInterrupt(Key2, Key2Interrupt, RISING);
 
-  xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, NULL, 0);
+  xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
   xTaskCreate(motion_task, "motion_task", 2048, NULL, 2, &xMotionTask);
   xTaskCreate(oled_task, "oled_task", 2048, NULL, 2, &xOLEDTask);
   xTaskCreate(ws2812_task, "ws2812_task", 2028, NULL, 2, &xWS2812Task);
