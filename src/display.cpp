@@ -17,6 +17,13 @@ void Display::begin()
     oled.sendBuffer();
 }
 
+void Display::configNetwork()
+{
+    oled.clearBuffer();
+    oled.drawStr(10, 20, "WiFi Config!");
+    oled.sendBuffer();
+}
+
 void Display::menuWiFiMode(bool mode)
 {
     oled.clearBuffer();
@@ -30,6 +37,22 @@ void Display::menuWiFiMode(bool mode)
     case 1:
         oled.drawTriangle(80, 35, 90, 30, 90, 40);
         break;
+    }
+    oled.sendBuffer();
+}
+
+void Display::modeSwitch(bool mode)
+{
+    oled.clearBuffer();
+    if (!mode)
+    {
+        oled.drawStr(20, 20, "Switch to");
+        oled.drawStr(20, 40, "AP Mode!");
+    }
+    else
+    {
+        oled.drawStr(20, 20, "Switch to");
+        oled.drawStr(20, 40, "STA Mode!");
     }
     oled.sendBuffer();
 }

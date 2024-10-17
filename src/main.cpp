@@ -7,7 +7,7 @@
 #include "cconfig.h"
 #include "display.h"
 
-static IPAddress remote_IP(192, 168, 31, 199);
+// static IPAddress remote_IP(192, 168, 31, 199);
 static uint32_t remoteUdpPort = 8080;
 
 static WiFiUDP udp;
@@ -29,13 +29,17 @@ void udp_control(void *param)
 {
   prefs.begin("OffLine");
   isWiFiMode = prefs.getBool("isWiFiMode", true);
+  Serial.println(prefs.getString("WiFiSSID"));
+  Serial.println(prefs.getString("WiFiPSWD"));
   prefs.end();
 
   if (isWiFiMode)
   {
     WiFi.mode(WIFI_STA);
     WiFi.setSleep(false);
-    WiFi.begin(wifi_SSID, wifi_PSWD);
+    prefs.begin("OffLine");
+    WiFi.begin(prefs.getString("WiFiSSID").c_str(), prefs.getString("WiFiPSWD").c_str());
+    prefs.end();
     while (WiFi.status() != WL_CONNECTED)
     {
       vTaskDelay(200);
@@ -47,12 +51,15 @@ void udp_control(void *param)
     WiFi.softAP("ESP32-FFR-AP");
   }
 
+  Serial.println(WiFi.getMode());
   Serial.print("Connected, IP Address: ");
   Serial.println(WiFi.localIP());
   xTaskNotify(xOLEDTask, 17, eSetValueWithOverwrite);
   udp.beginPacket("255.255.255.255", remoteUdpPort);
   udp.print("#FFR ");
   udp.print(WiFi.localIP());
+  udp.print(" ");
+  udp.print(WiFi.getMode());
   udp.print(" ");
   udp.print(isRGBenabled);
   udp.endPacket();
@@ -67,6 +74,7 @@ void udp_control(void *param)
       char val[packetSize];
       udp.read(val, packetSize);
       String recvStr = String(val);
+      memset(val, 0, packetSize);
 #ifdef UDPDEBUG
       Serial.print("UDP Received:");
       Serial.println(recvStr);
@@ -98,6 +106,33 @@ void udp_control(void *param)
           String freqInCmd = recvStr.substring(recvStr.indexOf(" ") + 1);
           float cmdFreq = freqInCmd.toFloat();
           motion.setFrequency(cmdFreq);
+        }
+        else if (recvStr.indexOf("setWiFi") > 0)
+        {
+          if (WiFi.getMode() == WIFI_AP)
+          {
+            String rcvWiFiInfo = recvStr.substring(recvStr.indexOf(" ") + 1);
+            String rcvWiFiSSID = rcvWiFiInfo.substring(0, rcvWiFiInfo.indexOf(" "));
+            String rcvWiFiPSWD = rcvWiFiInfo.substring(rcvWiFiInfo.indexOf(" ") + 1);
+            prefs.begin("OffLine");
+            prefs.putString("WiFiSSID", rcvWiFiSSID);
+            prefs.putString("WiFiPSWD", rcvWiFiPSWD);
+            prefs.end();
+            xTaskNotify(xOLEDTask, 21, eSetValueWithOverwrite);
+          }
+        }
+        else if (recvStr.indexOf("WiFiMode") > 0)
+        {
+          String rcvWiFiMode = recvStr.substring(recvStr.indexOf(" ") + 1);
+          int rcvNumWiFiMode = rcvWiFiMode.toInt() - 1;
+          isWiFiMode = rcvNumWiFiMode;
+          prefs.begin("OffLine");
+          if (prefs.getBool("isWiFiMode") != isWiFiMode)
+          {
+            prefs.putBool("isWiFiMode", isWiFiMode);
+          }
+          prefs.end();
+          xTaskNotify(xOLEDTask, 22, eSetValueWithOverwrite);
         }
       }
 #endif
@@ -177,6 +212,16 @@ void oled_task(void *param)
           i = 0;
         }
         break;
+      case 21:
+        display.configNetwork();
+        break;
+      case 22:
+        display.modeSwitch(isWiFiMode);
+
+        vTaskSuspend(xUDPTask);
+        vTaskDelete(xUDPTask);
+        xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
+        break;
       }
     }
 
@@ -192,13 +237,17 @@ void oled_task(void *param)
         display.menuWiFiMode(isWiFiMode);
       }
       prefs.begin("OffLine");
-      prefs.putBool("isWiFiMode", isWiFiMode);
-      prefs.end();
-
       isChoosed = false;
-      vTaskSuspend(xUDPTask);
-      vTaskDelete(xUDPTask);
-      xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
+      if (prefs.getBool("isWiFiMode") != isWiFiMode)
+      {
+        prefs.putBool("isWiFiMode", isWiFiMode);
+
+        vTaskSuspend(xUDPTask);
+        vTaskDelete(xUDPTask);
+        xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
+      }
+      prefs.end();
+      display.modeSwitch(isWiFiMode);
     }
     vTaskDelay(1);
   }

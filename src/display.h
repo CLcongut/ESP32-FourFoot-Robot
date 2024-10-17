@@ -13,7 +13,9 @@ public:
     ~Display();
 
     void begin();
+    void configNetwork();
     void menuWiFiMode(bool mode);
+    void modeSwitch(bool mode);
     void numberCtrl(int number);
     void pairWithMotion(int expression);
     void showExpression(int expression);
