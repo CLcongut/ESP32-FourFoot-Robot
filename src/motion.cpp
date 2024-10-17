@@ -61,10 +61,6 @@ void Motion::come()
     pwm.setPWM(LULEG, 0, 250);
     pwm.setPWM(LUFOOT, 0, 600);
     pwm.setPWM(RDFOOT, 0, 600);
-    // u8g2.clearBuffer();
-    // u8g2.drawXBMP(2, 2, 128, 64, zhengchang);
-    // u8g2.sendBuffer();
-    // Serial.println(end - start);
     vTaskDelay(20);
 }
 // done
@@ -81,6 +77,39 @@ void Motion::dog()
     pwm.setPWM(LDLEG, 0, 180);
     pwm.setPWM(RDLEG, 0, 370);
 }
+
+void Motion::dance()
+{
+    pwm.setPWM(LULEG, 0, 360);
+    pwm.setPWM(RULEG, 0, 220);
+    pwm.setPWM(LDLEG, 0, 180);
+    pwm.setPWM(RDLEG, 0, 390);
+    vTaskDelay(300);
+    pwm.setPWM(RUFOOT, 0, 110);
+    pwm.setPWM(RDFOOT, 0, 620);
+    vTaskDelay(100);
+    pwm.setPWM(LUFOOT, 0, 400);
+    pwm.setPWM(LDFOOT, 0, 300);
+    vTaskDelay(300);
+    pwm.setPWM(LUFOOT, 0, 650);
+    pwm.setPWM(LDFOOT, 0, 110);
+    vTaskDelay(100);
+    pwm.setPWM(RUFOOT, 0, 300);
+    pwm.setPWM(RDFOOT, 0, 400);
+    vTaskDelay(300);
+    pwm.setPWM(RUFOOT, 0, 110);
+    pwm.setPWM(RDFOOT, 0, 620);
+    vTaskDelay(100);
+    pwm.setPWM(LUFOOT, 0, 400);
+    pwm.setPWM(LDFOOT, 0, 300);
+    vTaskDelay(300);
+    pwm.setPWM(LUFOOT, 0, 650);
+    pwm.setPWM(LDFOOT, 0, 110);
+    vTaskDelay(100);
+    pwm.setPWM(RUFOOT, 0, 300);
+    pwm.setPWM(RDFOOT, 0, 400);
+}
+
 // done
 void Motion::fan()
 {
@@ -139,10 +168,6 @@ void Motion::hello()
     pwm.setPWM(LULEG, 0, 250);
     pwm.setPWM(LUFOOT, 0, 600);
     pwm.setPWM(RDFOOT, 0, 600);
-    // u8g2.clearBuffer();
-    // u8g2.drawXBMP(2, 2, 128, 64, zhengchang);
-    // u8g2.sendBuffer();
-    // Serial.println(end - start);
     vTaskDelay(20);
 }
 
@@ -270,7 +295,7 @@ void Motion::sleep1()
     vTaskDelay(100);
     pwm.setPWM(LDLEG, 0, 180);
     vTaskDelay(100);
-    pwm.setPWM(RDLEG, 0, 370);
+    pwm.setPWM(RDLEG, 0, 390);
 }
 
 void Motion::sleep2()
@@ -294,8 +319,6 @@ void Motion::surrender()
     pwm.setPWM(LDFOOT, 0, 660);
 }
 
-// 加一个左右摇摆
-
 void Motion::controlNumber(int num)
 {
     switch (num)
@@ -310,39 +333,42 @@ void Motion::controlNumber(int num)
         dog();
         break;
     case 3:
-        fan();
+        dance();
         break;
     case 4:
-        forward();
+        fan();
         break;
     case 5:
-        hello();
+        forward();
         break;
     case 6:
-        left();
+        hello();
         break;
     case 7:
-        lie();
+        left();
         break;
     case 8:
-        middle();
+        lie();
         break;
     case 9:
-        normal();
+        middle();
         break;
     case 10:
-        right();
+        normal();
         break;
     case 11:
-        stand();
+        right();
         break;
     case 12:
-        sleep1();
+        stand();
         break;
     case 13:
-        sleep2();
+        sleep1();
         break;
     case 14:
+        sleep2();
+        break;
+    case 15:
         surrender();
         break;
     default:

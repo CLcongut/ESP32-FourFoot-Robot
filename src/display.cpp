@@ -80,39 +80,42 @@ void Display::pairWithMotion(int expression)
         oled.drawXBMP(2, 2, 128, 64, goupao); // dog();
         break;
     case 3:
-        oled.drawXBMP(2, 2, 128, 64, shanzi); // fan();
+        oled.drawXBMP(2, 2, 128, 64, yaobai); // dance();
         break;
     case 4:
-        oled.drawXBMP(2, 2, 128, 64, zhengchang); // forward();
+        oled.drawXBMP(2, 2, 128, 64, shanzi); // fan();
         break;
     case 5:
-        oled.drawXBMP(2, 2, 128, 64, nihao); // hello();
+        oled.drawXBMP(2, 2, 128, 64, zhengchang); // forward();
         break;
     case 6:
-        oled.drawXBMP(2, 2, 128, 64, zhengchang); // left();
+        oled.drawXBMP(2, 2, 128, 64, nihao); // hello();
         break;
     case 7:
-        oled.drawXBMP(2, 2, 128, 64, goupao); // lie();
+        oled.drawXBMP(2, 2, 128, 64, zhengchang); // left();
         break;
     case 8:
-        oled.drawXBMP(2, 2, 128, 64, laia); // middle();
+        oled.drawXBMP(2, 2, 128, 64, goupao); // lie();
         break;
     case 9:
-        oled.drawXBMP(2, 2, 128, 64, zhengchang); // normal();
+        oled.drawXBMP(2, 2, 128, 64, laia); // middle();
         break;
     case 10:
-        oled.drawXBMP(2, 2, 128, 64, zhengchang); // right();
+        oled.drawXBMP(2, 2, 128, 64, zhengchang); // normal();
         break;
     case 11:
-        oled.drawXBMP(2, 2, 128, 64, zhengchang); // stand();
+        oled.drawXBMP(2, 2, 128, 64, zhengchang); // right();
         break;
     case 12:
-        oled.drawXBMP(2, 2, 128, 64, shuijiao); // sleep1();
+        oled.drawXBMP(2, 2, 128, 64, zhengchang); // stand();
         break;
     case 13:
-        oled.drawXBMP(2, 2, 128, 64, shuijiao); // sleep2();
+        oled.drawXBMP(2, 2, 128, 64, shuijiao); // sleep1();
         break;
     case 14:
+        oled.drawXBMP(2, 2, 128, 64, shuijiao); // sleep2();
+        break;
+    case 15:
         oled.drawXBMP(2, 2, 128, 64, touxiang); // surrender();
         break;
     default:

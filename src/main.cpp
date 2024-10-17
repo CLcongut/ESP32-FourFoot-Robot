@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <Preferences.h>
 #include <FastLED.h>
 #include <U8g2lib.h>
 #include "motion.h"
@@ -13,12 +14,13 @@ static WiFiUDP udp;
 static Motion motion;
 static CRGB leds[2];
 static Display display;
+static Preferences prefs;
 
 static TaskHandle_t xMotionTask = NULL;
 static TaskHandle_t xOLEDTask = NULL;
 static TaskHandle_t xWS2812Task = NULL;
 
-volatile bool WS2812Enable = true;
+volatile bool isRGBenabled;
 
 void udp_control(void *param)
 {
@@ -32,6 +34,12 @@ void udp_control(void *param)
   Serial.print("Connected, IP Address: ");
   Serial.println(WiFi.localIP());
   xTaskNotify(xOLEDTask, 17, eSetValueWithOverwrite);
+  udp.beginPacket("255.255.255.255", remoteUdpPort);
+  udp.print("#FFR ");
+  udp.print(WiFi.localIP());
+  udp.print(" ");
+  udp.print(isRGBenabled);
+  udp.endPacket();
   udp.begin(remoteUdpPort);
   for (;;)
   {
@@ -80,8 +88,35 @@ void udp_control(void *param)
       {
         String notifyValueStr = recvStr.substring(recvStr.indexOf("#") + 1);
         uint32_t notifyValue = notifyValueStr.toInt();
-        xTaskNotify(xMotionTask, notifyValue, eSetValueWithOverwrite);
-        xTaskNotify(xOLEDTask, notifyValue, eSetValueWithOverwrite);
+        if (notifyValue > 18)
+        {
+          switch (notifyValue)
+          {
+          case 19:
+            vTaskSuspend(xWS2812Task);
+            leds[0] = CRGB::Black;
+            leds[1] = CRGB::Black;
+            FastLED.show();
+            prefs.begin("OffLine");
+            prefs.putBool("isRGBenabled", false);
+            prefs.end();
+            break;
+          case 20:
+            vTaskResume(xWS2812Task);
+            prefs.begin("OffLine");
+            prefs.putBool("isRGBenabled", true);
+            prefs.end();
+            break;
+
+          default:
+            break;
+          }
+        }
+        else
+        {
+          xTaskNotify(xMotionTask, notifyValue, eSetValueWithOverwrite);
+          xTaskNotify(xOLEDTask, notifyValue, eSetValueWithOverwrite);
+        }
       }
     }
     vTaskDelay(1);
@@ -139,34 +174,28 @@ void ws2812_task(void *param)
   FastLED.addLeds<WS2812B, 5, GRB>(leds, 2);
   FastLED.setBrightness(255);
   FastLED.clear();
-  leds[0] = CRGB::Red;
-  leds[1] = CRGB::Red;
   FastLED.show();
+
+  if (!isRGBenabled)
+  {
+    vTaskSuspend(NULL);
+  }
 
   for (;;)
   {
-    if (WS2812Enable)
+    for (int i = 0; i < 256; i++)
     {
-      for (int i = 0; i < 256; i++)
-      {
-        leds[0] = CHSV(i, 255, 255);
-        leds[1] = CHSV(i, 255, 255);
-        FastLED.show();
-        FastLED.delay(10);
-      }
-      for (int i = 255; i >= 0; i--)
-      {
-        leds[0] = CHSV(i, 255, 255);
-        leds[1] = CHSV(i, 255, 255);
-        FastLED.show();
-        FastLED.delay(10);
-      }
-    }
-    else
-    {
-      leds[0] = CRGB::Black;
-      leds[1] = CRGB::Black;
+      leds[0] = CHSV(i, 255, 255);
+      leds[1] = CHSV(i, 255, 255);
       FastLED.show();
+      FastLED.delay(10);
+    }
+    for (int i = 255; i >= 0; i--)
+    {
+      leds[0] = CHSV(i, 255, 255);
+      leds[1] = CHSV(i, 255, 255);
+      FastLED.show();
+      FastLED.delay(10);
     }
   }
 }
@@ -180,13 +209,16 @@ void Key1Interrupt()
 void Key2Interrupt()
 {
   digitalWrite(SignalPin, !digitalRead(SignalPin));
-  WS2812Enable = !WS2812Enable;
 }
 
 void setup()
 {
   Serial.begin(115200);
   pinMode(SignalPin, OUTPUT);
+
+  prefs.begin("OffLine");
+  isRGBenabled = prefs.getBool("isRGBenabled", false);
+  prefs.end();
 
   attachInterrupt(Key1, Key1Interrupt, RISING);
   attachInterrupt(Key2, Key2Interrupt, RISING);

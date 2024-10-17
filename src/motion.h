@@ -29,19 +29,19 @@ public:
     void backward();  // number 0
     void come();      // number 1
     void dog();       // number 2
-    void fan();       // number 3
-    void forward();   // number 4
-    void hello();     // number 5
-    void left();      // number 6
-    void lie();       // number 7
-    void middle();    // number 8
-    void normal();    // number 9
-    void right();     // number 10
-    void stand();     // number 11
-    void sleep1();     // number 12
-    void sleep2();     // number 13
-    void surrender(); // number 14
-    // void swing1();
+    void dance();     // number 3
+    void fan();       // number 4
+    void forward();   // number 5
+    void hello();     // number 6
+    void left();      // number 7
+    void lie();       // number 8
+    void middle();    // number 9
+    void normal();    // number 10
+    void right();     // number 11
+    void stand();     // number 12
+    void sleep1();     // number 13
+    void sleep2();     // number 14
+    void surrender(); // number 15
     /*control command*/
     void controlNumber(int number);
     void ctlSingleServo(int servo, int angleStart, int angleEnd);
