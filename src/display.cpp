@@ -29,6 +29,10 @@ void Display::menuWiFiMode(bool mode)
     oled.clearBuffer();
     oled.drawStr(0, 20, "AP Mode");
     oled.drawStr(0, 40, "STA Mode");
+    oled.drawStr(0, 60, "OTA Update");
+    oled.setFont(u8g2_font_crox1h_tr);
+    oled.drawStr(100, 60, "boot");
+    oled.setFont(u8g2_font_crox2h_tr);
     switch (mode)
     {
     case 0:
@@ -57,9 +61,9 @@ void Display::modeSwitch(bool mode)
     oled.sendBuffer();
 }
 
-void Display::numberCtrl(int number)
-{
-}
+// void Display::numberCtrl(int number)
+// {
+// }
 
 void Display::pairWithMotion(int expression)
 {
@@ -165,5 +169,14 @@ void Display::showNetworkIP(IPAddress IPAddress)
     oled.drawStr(0, 20, "IP Address:");
     oled.setCursor(0, 40);
     oled.println(IPAddress);
+    oled.sendBuffer();
+}
+
+void Display::showOTAUpdate()
+{
+    oled.clearBuffer();
+    oled.drawStr(14, 30, "OTA Updating...");
+    // oled.setCursor(0, 40);
+    // oled.println(progress);
     oled.sendBuffer();
 }

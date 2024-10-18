@@ -6,6 +6,7 @@
 #include "motion.h"
 #include "cconfig.h"
 #include "display.h"
+#include "otaupdata.h"
 
 // static IPAddress remote_IP(192, 168, 31, 199);
 static uint32_t remoteUdpPort = 8080;
@@ -20,17 +21,35 @@ static TaskHandle_t xUDPTask = NULL;
 static TaskHandle_t xMotionTask = NULL;
 static TaskHandle_t xOLEDTask = NULL;
 static TaskHandle_t xWS2812Task = NULL;
+static TaskHandle_t xOTATask = NULL;
 
 volatile bool isRGBenabled = false;
 volatile bool isWiFiMode = false;
 volatile bool isChoosed = false;
 
+void ota_task(void *param)
+{
+  Serial.println("3 Second to update!");
+  vTaskDelay(3000);
+  xTaskNotify(xOLEDTask, 23, eSetValueWithOverwrite);
+
+  for (;;)
+  {
+    OTAUpdate otaUpdate;
+    otaUpdate.updataBin();
+
+    vTaskDelay(1000);
+    vTaskSuspend(NULL);
+    vTaskDelete(NULL);
+  }
+}
+
 void udp_control(void *param)
 {
   prefs.begin("OffLine");
   isWiFiMode = prefs.getBool("isWiFiMode", true);
-  Serial.println(prefs.getString("WiFiSSID"));
-  Serial.println(prefs.getString("WiFiPSWD"));
+  // Serial.println(prefs.getString("WiFiSSID"));
+  // Serial.println(prefs.getString("WiFiPSWD"));
   prefs.end();
 
   if (isWiFiMode)
@@ -51,7 +70,7 @@ void udp_control(void *param)
     WiFi.softAP("ESP32-FFR-AP");
   }
 
-  Serial.println(WiFi.getMode());
+  // Serial.println(WiFi.getMode());
   Serial.print("Connected, IP Address: ");
   Serial.println(WiFi.localIP());
   xTaskNotify(xOLEDTask, 17, eSetValueWithOverwrite);
@@ -133,6 +152,10 @@ void udp_control(void *param)
           }
           prefs.end();
           xTaskNotify(xOLEDTask, 22, eSetValueWithOverwrite);
+        }
+        else if (recvStr.indexOf("update") > 0)
+        {
+          xTaskCreate(ota_task, "ota_task", 4096, NULL, 2, &xOTATask);
         }
       }
 #endif
@@ -222,6 +245,9 @@ void oled_task(void *param)
         vTaskDelete(xUDPTask);
         xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
         break;
+      case 23:
+        display.showOTAUpdate();
+        break;
       }
     }
 
@@ -235,6 +261,15 @@ void oled_task(void *param)
       while (!isChoosed)
       {
         display.menuWiFiMode(isWiFiMode);
+        if (!digitalRead(BootPin))
+        {
+          vTaskDelay(20);
+          while (!digitalRead(BootPin))
+          {
+          }
+          xTaskCreate(ota_task, "ota_task", 4096, NULL, 2, &xOTATask);
+          vTaskDelay(20);
+        }
       }
       prefs.begin("OffLine");
       isChoosed = false;
@@ -300,6 +335,7 @@ void setup()
 {
   Serial.begin(115200);
   pinMode(SignalPin, OUTPUT);
+  pinMode(BootPin, INPUT_PULLUP);
 
   prefs.begin("OffLine");
   isRGBenabled = prefs.getBool("isRGBenabled", false);
@@ -309,12 +345,14 @@ void setup()
   attachInterrupt(Key2, Key2Interrupt, RISING);
 
   xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
-  xTaskCreate(motion_task, "motion_task", 2048, NULL, 2, &xMotionTask);
+  xTaskCreatePinnedToCore(motion_task, "motion_task", 2048, NULL, 2, &xMotionTask, 0);
   xTaskCreate(oled_task, "oled_task", 2048, NULL, 2, &xOLEDTask);
-  xTaskCreate(ws2812_task, "ws2812_task", 2028, NULL, 2, &xWS2812Task);
+  xTaskCreatePinnedToCore(ws2812_task, "ws2812_task", 2028, NULL, 2, &xWS2812Task, 0);
 }
 
 void loop()
 {
   vTaskDelete(NULL);
+  // digitalWrite(SignalPin, !digitalRead(SignalPin));
+  // vTaskDelay(1000);
 }

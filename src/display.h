@@ -16,8 +16,9 @@ public:
     void configNetwork();
     void menuWiFiMode(bool mode);
     void modeSwitch(bool mode);
-    void numberCtrl(int number);
+    // void numberCtrl(int number);
     void pairWithMotion(int expression);
     void showExpression(int expression);
     void showNetworkIP(IPAddress IPAddress);
+    void showOTAUpdate();
 };
