@@ -8,7 +8,7 @@ OTAUpdate::~OTAUpdate()
 {
 }
 
-void OTAUpdate::updataBin()
+void OTAUpdate::updataBin(String updateURL)
 {
     Serial.println("Start Update!");
 
@@ -45,6 +45,7 @@ void OTAUpdate::updataError(int error)
 void OTAUpdate::updataProgress(int progress, int total)
 {
     Serial.printf("CALLBACK:  HTTP update process at %d of %d bytes...\n", progress, total);
+    digitalWrite(SignalPin, !digitalRead(SignalPin));
 }
 
 void OTAUpdate::updataStart()

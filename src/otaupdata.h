@@ -2,11 +2,11 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <httpUpdate.h>
+#include "cconfig.h"
 
 class OTAUpdate
 {
 private:
-    String updateURL = "http://bin.bemfa.com/b/3BcNjQ0MmU1YjEzYWZiNDY0ZWIzY2VjNTYxYmM4NzI4ZTk=esp32FFRota.bin";
     WiFiClient UpdateClient;
     static void updataEnd();
     static void updataError(int error);
@@ -16,5 +16,5 @@ private:
 public:
     OTAUpdate();
     ~OTAUpdate();
-    void updataBin();
+    void updataBin(String updateURL);
 };

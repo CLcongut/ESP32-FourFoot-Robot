@@ -180,3 +180,10 @@ void Display::showOTAUpdate()
     // oled.println(progress);
     oled.sendBuffer();
 }
+
+void Display::showOTAURLchanged()
+{
+    oled.clearBuffer();
+    oled.drawStr(5, 30, "OTA URL Changed!");
+    oled.sendBuffer();
+}

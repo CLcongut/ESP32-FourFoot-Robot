@@ -31,12 +31,14 @@ void ota_task(void *param)
 {
   Serial.println("3 Second to update!");
   vTaskDelay(3000);
-  xTaskNotify(xOLEDTask, 23, eSetValueWithOverwrite);
 
   for (;;)
   {
+    prefs.begin("OffLine");
+    String updateURL = prefs.getString("OTAURL");
+    prefs.end();
     OTAUpdate otaUpdate;
-    otaUpdate.updataBin();
+    otaUpdate.updataBin(updateURL);
 
     vTaskDelay(1000);
     vTaskSuspend(NULL);
@@ -48,8 +50,6 @@ void udp_control(void *param)
 {
   prefs.begin("OffLine");
   isWiFiMode = prefs.getBool("isWiFiMode", true);
-  // Serial.println(prefs.getString("WiFiSSID"));
-  // Serial.println(prefs.getString("WiFiPSWD"));
   prefs.end();
 
   if (isWiFiMode)
@@ -86,7 +86,6 @@ void udp_control(void *param)
   digitalWrite(SignalPin, LOW);
   for (;;)
   {
-    // packetSize长度小于8时需要定义为8，并且使用memset清零
     size_t packetSize = udp.parsePacket();
     if (packetSize)
     {
@@ -139,6 +138,14 @@ void udp_control(void *param)
             prefs.end();
             xTaskNotify(xOLEDTask, 21, eSetValueWithOverwrite);
           }
+        }
+        else if (recvStr.indexOf("setURL") > 0)
+        {
+          String rcvURL = recvStr.substring(recvStr.indexOf(" ") + 1);
+          prefs.begin("OffLine");
+          prefs.putString("OTAURL", rcvURL);
+          prefs.end();
+          xTaskNotify(xOLEDTask, 24, eSetValueWithOverwrite);
         }
         else if (recvStr.indexOf("WiFiMode") > 0)
         {
@@ -245,8 +252,8 @@ void oled_task(void *param)
         vTaskDelete(xUDPTask);
         xTaskCreatePinnedToCore(udp_control, "udp_control", 2048, NULL, 2, &xUDPTask, 0);
         break;
-      case 23:
-        display.showOTAUpdate();
+      case 24:
+        display.showOTAURLchanged();
         break;
       }
     }
@@ -267,8 +274,13 @@ void oled_task(void *param)
           while (!digitalRead(BootPin))
           {
           }
-          xTaskCreate(ota_task, "ota_task", 4096, NULL, 2, &xOTATask);
           vTaskDelay(20);
+          xTaskCreate(ota_task, "ota_task", 4096, NULL, 2, &xOTATask);
+          while (1)
+          {
+            display.showOTAUpdate();
+            vTaskDelay(1000);
+          }
         }
       }
       prefs.begin("OffLine");
@@ -321,13 +333,11 @@ void ws2812_task(void *param)
 
 void Key1Interrupt()
 {
-  // xTaskNotify(xOLEDTask, 21, eSetValueWithOverwrite);
   isWiFiMode = !isWiFiMode;
 }
 
 void Key2Interrupt()
 {
-  // xTaskNotify(xOLEDTask, 21, eSetValueWithOverwrite);
   isChoosed = true;
 }
 
@@ -354,5 +364,5 @@ void loop()
 {
   vTaskDelete(NULL);
   // digitalWrite(SignalPin, !digitalRead(SignalPin));
-  // vTaskDelay(1000);
+  // vTaskDelay(100);
 }

@@ -21,4 +21,5 @@ public:
     void showExpression(int expression);
     void showNetworkIP(IPAddress IPAddress);
     void showOTAUpdate();
+    void showOTAURLchanged();
 };
